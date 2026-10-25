@@ -1,5 +1,7 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from backend.app.config import settings
 from backend.app.database import engine, Base, SessionLocal
 from backend.app.seed_data import seed_database
@@ -42,11 +44,26 @@ app.include_router(reviews.router, prefix=settings.API_PREFIX)
 app.include_router(audit.router, prefix=settings.API_PREFIX)
 app.include_router(seed.router, prefix=settings.API_PREFIX)
 
-@app.get("/")
-def root():
+@app.get("/api/health")
+def health():
     return {
         "app": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "status": "operational",
         "docs": "/docs"
     }
+
+# Mount frontend production build if available
+frontend_dist = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../frontend/dist"))
+if os.path.exists(frontend_dist):
+    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="static")
+else:
+    @app.get("/")
+    def root():
+        return {
+            "app": settings.PROJECT_NAME,
+            "version": settings.VERSION,
+            "status": "operational",
+            "docs": "/docs"
+        }
+

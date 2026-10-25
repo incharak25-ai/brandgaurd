@@ -37,7 +37,10 @@ client = TestClient(app)
 def test_root_endpoint():
     response = client.get("/")
     assert response.status_code == 200
-    data = response.json()
+    # Checks either HTML from static frontend or JSON from health endpoint
+    health_res = client.get("/api/health")
+    assert health_res.status_code == 200
+    data = health_res.json()
     assert data["app"] == "BrandGuard"
     assert data["status"] == "operational"
 
